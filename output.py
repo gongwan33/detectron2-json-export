@@ -5,7 +5,7 @@ def json_output(predictions):
     print(instances)
     print(keypoints)
 
-def json_output_init():
+def json_output_init(fname):
     return
 
 def json_output_finish():
