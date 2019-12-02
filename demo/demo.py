@@ -12,7 +12,7 @@ from detectron2.data.detection_utils import read_image
 from detectron2.utils.logger import setup_logger
 
 from predictor import VisualizationDemo
-from detectronjson.output import json_output, json_output_init, json_output_finish
+from detectronjson.output import JSONOutput 
 
 # constants
 WINDOW_NAME = "COCO detections"
@@ -118,6 +118,8 @@ if __name__ == "__main__":
         num_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
         basename = os.path.basename(args.video_input)
 
+        json_output = None
+
         if args.output:
             if os.path.isdir(args.output):
                 output_fname = os.path.join(args.output, basename)
@@ -135,12 +137,13 @@ if __name__ == "__main__":
                 isColor=True,
             )
 
-            json_output_init(output_fname)
+            json_output = JSONOutput(output_fname)
         assert os.path.isfile(args.video_input)
-        for vis_frame, predictions in tqdm.tqdm(demo.run_on_video(video), total=num_frames):
+        for idx, (vis_frame, predictions) in enumerate(tqdm.tqdm(demo.run_on_video(video), total=num_frames)):
             if args.output:
                 output_file.write(vis_frame)
-                json_output(predictions)
+                if json_output is not None:
+                    json_output.write(predictions, idx)
             else:
                 cv2.namedWindow(basename, cv2.WINDOW_NORMAL)
                 cv2.imshow(basename, vis_frame)
@@ -149,6 +152,8 @@ if __name__ == "__main__":
         video.release()
         if args.output:
             output_file.release()
-            json_output_finish()
+
+            if json_output is not None:
+                json_output.release()
         else:
             cv2.destroyAllWindows()
